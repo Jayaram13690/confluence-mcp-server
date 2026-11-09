@@ -686,5 +686,3 @@ For issues and questions:
 ## Test command
 - python -m pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=term-missing
 =======
-# pdlc-confluence-mcp-server
->>>>>>> ce1303b432395760e6b4d22eabc829e34378e63e
