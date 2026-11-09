@@ -1,0 +1,5 @@
+controller:
+  name: nginx-controller
+  allowSnippetAnnotations: true
+  service:  
+    type: ClusterIP

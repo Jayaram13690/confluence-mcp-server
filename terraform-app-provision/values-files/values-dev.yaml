@@ -1,0 +1,67 @@
+global:
+  replicaCount: "1"
+  namespace: "neuroai-mcp"
+  appName: "confluence-mcp"
+
+  labels:
+    app: confluence-mcp
+
+neuroaimcp:
+  service:
+    name: confluence-mcp-service
+    type: ClusterIP
+        
+  Gateway:
+    useGateway: true
+    createGateway: false
+    GatewayClass: gke-l7-rilb
+    name: internal-mcp-gateway
+    namespace: neuroai-mcp
+    staticIPName: mcp-gateway-static-ip-dev
+    certificates: mcp-dev-certificate
+
+  httpRoute:
+    host: "neuroaieng-mcp.dev.com"
+    path: /mcp/confluence
+
+
+  healthCheckPolicy:
+    requestPath: "/mcp/confluence/health"
+    port: 8080
+
+  neuroaiMcpDeploy:
+    name: confluence-mcp
+    serviceAccount:
+      name: neuroaimcp-ksa
+      create: true
+      annotations:
+        iam.gke.io/gcp-service-account: neuroaieng-workloadidentity-sa@gbg-wxcc.iam.gserviceaccount.com
+    image: "us-east4-docker.pkg.dev/gbg-wxcc/neuroaiengineering-repo/dev/confluence-mcp-server:v1"
+    imagePullPolicy: Always
+
+  neuroaimcpConfig:
+    CONFLUENCE_URL: "https://cdeproducts.atlassian.net/wiki"
+    CONFLUENCE_EMAIL: "gaurav.sdeshpande@cognizant.com"
+    CONFLUENCE_USERNAME: "gaurav.sdeshpande@cognizant.com"
+
+  neuroaimcpSecrets:
+    useSecretProvider: true
+    secretproviderDetails:
+      provider: gcp # in case of azure. for aws specify aws. for gke specify gcp
+      # based on the provider specify the appropriate values in either aws, azure or gcp blocks
+      ######### Provider specific configuration block #####
+      #azure:
+      #  keyvaultName: KV-rs-neuroai-manual # Required in case of azure
+      #  tenantId: de08c407-19b9-427d-9fe8-edf254300ca7 # Required in case of azure
+      #  userManagedIdentityClientId: d598fd96-63d5-47b7-a2bc-35a8fe250e67 # Set the clientID of the user-assigned managed identity to use. Required in case of azure
+      gcp:
+        project: "gbg-wxcc" # Required in case of gcp
+        resourceName: "projects/gbg-wxcc/locations/us-east4/secrets/MCP-Confluence-secrets-dev/versions/latest" # Required in case of gcp
+      ######### End of Provider specific configuration block #####
+      secretObjects:
+        - keyVaultObjectName: CONFLUENCE_API_TOKEN
+          secretName: CONFLUENCE_API_TOKEN
+
+    # specify secrets if K8s secrets being used without an external secrets vault like Secrets Manager or Azure Key Vault
+    secrets:
+      CONFLUENCE_API_TOKEN: "DUMMY"

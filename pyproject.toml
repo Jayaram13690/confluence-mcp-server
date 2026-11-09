@@ -1,0 +1,42 @@
+[project]
+name = "confluence-mcp-server"
+version = "1.0.0"
+description = "Confluence MCP server"
+requires-python = ">=3.13"
+
+dependencies = [
+    "fastmcp==2.12.2",
+    "uvicorn[standard]==0.38.0",
+    "python-dotenv==1.1.1",
+    "atlassian-python-api==4.0.7",
+    "pydantic==2.11.7",
+    "beautifulsoup4==4.13.5",
+    "lxml==6.0.1",
+    "PyMuPDF==1.26.4",
+    "python-docx==1.2.0",
+    "azure-appconfiguration-provider>=2.5.0",
+    "azure-identity>=1.25.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.4.2",
+    "pytest-asyncio==1.1.0",
+    "pytest-cov==7.0.0",
+    "coverage==7.10.6",
+    "pytest-mock==3.15.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff.lint.per-file-ignores]
+# Pre-existing findings, tracked as known debt rather than fixed inline.
+# Broad except/except-pass and implicit-Optional style issues; no production
+# behavior risk (see PR discussion). Do not add new codes here without cause.
+"src/services/*.py" = ["BLE001", "S110"]
+"src/tools/health_tool.py" = ["BLE001"]
+"src/tools/context.py" = ["RUF013", "F841"]
+# Dev-only test runner script, never imported by the app or shipped in the
+# Docker image.
+"tests/confluence/run_all_tests.py" = ["PLW1510", "BLE001", "F401"]

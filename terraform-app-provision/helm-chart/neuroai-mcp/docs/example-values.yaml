@@ -1,0 +1,99 @@
+# Default values for demochart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+global:
+  replicaCount: 1
+  namespace: "flowsource"
+
+flowsource:
+  useInternalPostgres: false
+  ingress:
+    host: localhost
+    useIngress: true
+    ingressClass: nginx
+  flowsourceDeploy:
+    image: "<Image Registry>/<Repo>:<Version>"
+    imagePullPolicy: IfNotPresent
+  flowsourceConfig:
+    NODE_OPTIONS: "--no-node-snapshot"
+    INSIGHTS_URL: http://DUMMY
+    SONARQUBE_URL: http://DUMMY
+    CHECKMARX_BASE_URL: https://security.checkmarx.net/cxrestapi/help
+    CHECKMARX_AUTH_URL: https://security.checkmarx.net/CxRestAPI/auth/identity/connect/token
+    DEVOPS_GURU_FILTER_FROM_TIME: 0
+    ChatBotJsonsFolderPath: "/app/chatbot"
+    FLOWSOURCE_BASE_URL: "http://localhost:7007"
+    DATADOG_SITE: https://us3.datadoghq.com/api/v2/logs/events
+    S3_BUCKET_NAME: DUMMY
+    FLOWSOURCE_VERSION: 1.0
+    JIRA_USER_EMAIL: DUMMY
+    JIRA_BASE_URL: https://DUMMY/rest/api/3/
+    JIRA_TARGET: https://DUMMY
+    AZURE_DEVOPS_ORGANIZATION: DUMMY
+    S3_AWS_REGION: DUMMY
+    TECHDOCS_STORAGE_PROVIDER_TYPE: azureBlobStorage
+    TECHDOCS_STORAGE_CONTAINER_NAME: azureflowsource
+    CHATBOT_ENABLED: "true"
+    AZURE_DEVOPS_BASEURL: https://dev.azure.com
+    CHATBOT_URL: DUMMY
+    JENKINS_BASE_URL: https://deployment.jenkins.io
+    PRISMA_API_URL: https://api2.prismacloud.io/
+    POSTGRES_SERVICE_HOST: "DATABASE HOST"
+    POSTGRES_SERVICE_PORT: '5432'
+    POSTGRES_USER: "DATABASE USER"
+
+  flowsourceSecrets:
+    # true if using external vault like AWS Secrets Manager or Azure Key Vault
+    useSecretProvider: true
+    secretproviderDetails:
+      provider: azure # in case of azure. for aws specify aws. for gke specify gcp
+      # based on the provider specify the appropriate values in either aws, azure or gcp blocks
+      ######### Provider specific configuration block #####
+      azure:
+        keyvaultName: AZURE VAULTNAME # Required in case of azure
+        tenantId: AZURE TENANTID OF VAULT # Required in case of azure
+        userManagedIdentityClientId: AZURE CLIENTID # Set the clientID of the user-assigned managed identity to use. Required in case of azure
+      aws:
+        region: SECRETS REGION # Required in case of aws
+        secretARN: ARN OF SECRETS # Required in case of aws
+      gcp:
+        project: GCP PROJECT ID # Required in case of gcp
+      ######### End of Provider specific configuration block #####
+      secretObjects: 
+        - keyVaultObjectName: GITHUB-TOKEN # In case of AWS the object names should not contain - as does not work with JMESPATH
+          secretName: GITHUB_TOKEN
+        - keyVaultObjectName: AUTH-GITHUB-CLIENT-ID-TOKEN
+          secretName: AUTH_GITHUB_CLIENT_ID
+        - keyVaultObjectName: POSTGRES-PASSWORD
+          secretName: POSTGRES_PASSWORD
+    # specify secrets if K8s secrets being used without an external secrets vault like Secrets Manager or Azure Key Vault      
+    secrets:
+      AUTH_GITHUB_CLIENT_ID: "DUMMY"
+      AUTH_GITHUB_CLIENT_SECRET: "DUMMY"
+      AZURE_DEVOPS_TOKEN: "DUMMY"
+      BACKEND_SECRET: "DUMMY"
+      CHECKMARX_CLIENT_ID: "DUMMY"
+      CHECKMARX_CLIENT_SECRET: "DUMMY"
+      CHECKMARX_GRANT_TYPE: "DUMMY"
+      CHECKMARX_PASSWORD: "DUMMY"
+      CHECKMARX_USERNAME: "DUMMY"
+      DATADOG_API_KEY: "DUMMY"
+      DATADOG_APP_KEY: "DUMMY"
+      DEVOPS_GURU_AWS_ACCESS_KEY_ID: "DUMMY"
+      DEVOPS_GURU_AWS_SECRET_ACCESS_KEY: "DUMMY"
+      GITHUB_TOKEN: "TOKEN"
+      INSIGHTS_API_KEY: "DUMMY"
+      JENKINS_API_KEY: "DUMMY"
+      JENKINS_USERNAME: "DUMMY"
+      JIRA_ACCESS_KEY: "DUMMY"
+      JIRA_TOKEN: "Basic DUMMY"
+      PRISMA_ACCESS_ID: "DUMMY"
+      PRISMA_ACCESS_KEY: "DUMMY"
+      S3_AWS_ACCESS_KEY: "DUMMY"
+      S3_AWS_SECRET_KEY: "DUMMY"
+      SONARQUBE_TOKEN: "DUMMY"
+      TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_KEY: "DUMMY"
+      TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_NAME: "DUMMY"
+      WELL_ARCHITECTED_AWS_ACCESS_KEY: "DUMMY"
+      WELL_ARCHITECTED_AWS_SECRET_KEY: "DUMMY"
+      POSTGRES_PASSWORD: "DATABASE PASSWORD"

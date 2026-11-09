@@ -1,0 +1,511 @@
+openapi: 3.1.0
+info:
+  title: Confluence MCP Server
+  version: 1.0.0
+  summary: MCP (JSON-RPC 2.0) adapter over Confluence Cloud REST.
+  description: 'Contract for the Confluence MCP server. **spec.md is the source of truth for behaviour.**
+
+
+    An MCP server is a JSON-RPC endpoint, not a set of REST routes. This document describes the two HTTP routes
+    (`POST /mcp/confluence`, `GET /mcp/confluence/health`), each of the **4 registered tools** as a `tools/call`
+    body (`*Arguments`, generated from the live FastMCP schemas) with its result schema, and `x-mcp-tools`, an index
+    tying each tool to its requirement, tags and upstream Confluence calls.
+
+
+    Tools **not** registered today: `confluence-health` (FR-5, DECISION Q-8), `confluence-searchPages` (FR-6) and
+    `confluence-uploadAttachment` (FR-7) (Q-1). They are listed under `x-mcp-unregistered`.
+
+
+    Failures are returned as an `ErrorEnvelope` inside a normal result (HTTP 200, isError=false). `x-target-*` marks
+    constraints the spec requires and the code does not yet enforce.
+
+
+    **Auth:** none (SEC-1 unresolved). Do not expose to the internet.'
+servers:
+- url: http://localhost:9001
+  description: Local (CONFLUENCE_PORT, default 9001)
+tags:
+- name: mcp
+  description: MCP JSON-RPC transport
+- name: ops
+  description: Operations
+paths:
+  /mcp/confluence:
+    post:
+      tags:
+      - mcp
+      operationId: mcpJsonRpc
+      summary: MCP streamable-HTTP endpoint (stateless)
+      description: JSON-RPC 2.0. The server is stateless (FR-8). A tool failure is HTTP 200 with an ErrorEnvelope
+        as the tool result.
+      parameters:
+      - name: Accept
+        in: header
+        required: true
+        schema:
+          type: string
+          example: application/json, text/event-stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JsonRpcRequest'
+            examples:
+              confluence-readPageById:
+                summary: confluence-readPageById (FR-1)
+                value:
+                  jsonrpc: '2.0'
+                  id: 1
+                  method: tools/call
+                  params:
+                    name: confluence-readPageById
+                    arguments:
+                      space_key: ENG
+                      page_id: '123456'
+              confluence-readPageByTitle:
+                summary: confluence-readPageByTitle (FR-2)
+                value:
+                  jsonrpc: '2.0'
+                  id: 1
+                  method: tools/call
+                  params:
+                    name: confluence-readPageByTitle
+                    arguments:
+                      space_key: ENG
+                      page_title: Release Notes v2
+              confluence-readPageByUrl:
+                summary: confluence-readPageByUrl (FR-3)
+                value:
+                  jsonrpc: '2.0'
+                  id: 1
+                  method: tools/call
+                  params:
+                    name: confluence-readPageByUrl
+                    arguments:
+                      page_url: https://example.atlassian.net/wiki/spaces/ENG/pages/123456/Release+Notes
+              confluence-createPage:
+                summary: confluence-createPage (FR-4)
+                value:
+                  jsonrpc: '2.0'
+                  id: 1
+                  method: tools/call
+                  params:
+                    name: confluence-createPage
+                    arguments:
+                      space_key: ENG
+                      title: Design Notes
+                      body: <p>Hello</p>
+                      representation: storage
+              tools_list:
+                summary: List registered tools
+                value:
+                  jsonrpc: '2.0'
+                  id: 1
+                  method: tools/list
+      responses:
+        '200':
+          description: JSON-RPC response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonRpcResponse'
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Malformed request
+        '406':
+          description: Missing Accept header
+  /mcp/confluence/health:
+    get:
+      tags:
+      - ops
+      operationId: health
+      summary: Liveness (FR-9). Does not call Confluence.
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    ReadPageByIdArguments:
+      properties:
+        space_key:
+          description: Confluence space key
+          title: Space Key
+          type: string
+          x-target-pattern: ^(~[A-Za-z0-9:._-]+|[A-Za-z0-9]{1,255})$
+          x-spec-requirement: SEC-5
+        page_id:
+          description: Confluence page ID
+          title: Page Id
+          type: string
+          x-target-pattern: ^[0-9]{1,20}$
+      required:
+      - space_key
+      - page_id
+      type: object
+      description: Read Confluence page content by ID with structured response format.
+      x-spec-requirement: FR-1
+    ReadPageByTitleArguments:
+      properties:
+        space_key:
+          description: Confluence space key
+          title: Space Key
+          type: string
+          x-target-pattern: ^(~[A-Za-z0-9:._-]+|[A-Za-z0-9]{1,255})$
+          x-spec-requirement: SEC-5
+        page_title:
+          description: Confluence page title
+          title: Page Title
+          type: string
+          x-target-note: 'SEC-5: any non-blank text <= 255 chars. Today restricted to [A-Za-z0-9 _-] (DEF-3).'
+      required:
+      - space_key
+      - page_title
+      type: object
+      description: Read Confluence page content by title within a space with structured response format.
+      x-spec-requirement: FR-2
+    ReadPageByUrlArguments:
+      properties:
+        page_url:
+          description: Full Confluence page URL (e.g., https://your-domain.atlassian.net/wiki/spaces/SPACE/pages/123456/Page+Title)
+          title: Page Url
+          type: string
+      required:
+      - page_url
+      type: object
+      description: Read Confluence page content from a page URL with structured response format. Supports various
+        Confluence URL formats.
+      x-spec-requirement: FR-3
+    CreatePageArguments:
+      properties:
+        space_key:
+          description: Confluence space key
+          title: Space Key
+          type: string
+          x-target-pattern: ^(~[A-Za-z0-9:._-]+|[A-Za-z0-9]{1,255})$
+          x-spec-requirement: SEC-5
+        title:
+          description: Title for the new page
+          title: Title
+          type: string
+          maxLength: 255
+        body:
+          description: Page content (HTML, wiki, or view)
+          title: Body
+          type: string
+        attachment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          description: Optional file path to attach
+          title: Attachment
+          x-target-note: 'SEC-3: only inside CONFLUENCE_ATTACH_ROOT (DEF-1).'
+        representation:
+          default: storage
+          description: 'Content representation: storage|wiki|view'
+          title: Representation
+          type: string
+          enum:
+          - storage
+          - wiki
+          - view
+      required:
+      - space_key
+      - title
+      - body
+      type: object
+      description: Create a new Confluence page with optional file attachment and structured response format.
+      x-spec-requirement: FR-4
+    Attachment:
+      type: object
+      properties:
+        fileName:
+          type: string
+        content:
+          type: string
+          description: Extracted text (PDF/DOCX/TXT) or an error/unsupported note.
+        downloadLink:
+          type: string
+          format: uri
+        id:
+          type: string
+        error:
+          type: string
+          description: Present only when this attachment failed.
+      required:
+      - fileName
+      - content
+      - downloadLink
+      - id
+    ReadPageResult:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        body:
+          type: string
+          description: Plain text derived from the page body (FR-14).
+        url:
+          type:
+          - string
+          - 'null'
+          description: 'TARGET FR-16: today {base}/pages/{id}, which readPageByUrl cannot parse (DEF-11).'
+      required:
+      - id
+      - title
+      - attachments
+      - body
+    ReadPageByUrlResult:
+      allOf:
+      - $ref: '#/components/schemas/ReadPageResult'
+      - type: object
+        properties:
+          space_key:
+            type:
+            - string
+            - 'null'
+    AttachedFile:
+      type: object
+      properties:
+        file_path:
+          type: string
+          description: 'Echoed today; TARGET SEC-7: omit.'
+        filename:
+          type: string
+        status:
+          type: string
+          enum:
+          - success
+          - error
+        attachment_id:
+          type:
+          - string
+          - 'null'
+        error:
+          type: string
+      required:
+      - file_path
+      - filename
+      - status
+    CreatePageResult:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        space_key:
+          type: string
+        attached_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachedFile'
+        status:
+          type: string
+          enum:
+          - created
+          - created_with_errors
+          description: TARGET FR-19; absent today.
+      required:
+      - id
+      - title
+      - url
+      - space_key
+      - attached_files
+    HealthToolResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+        service:
+          type: string
+        confluence_url:
+          type: string
+        spaces_accessible:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - status
+      - service
+      description: 'confluence-health (FR-5): defined, not registered by default.'
+    ErrorCode:
+      type: string
+      enum:
+      - PAGE_NOT_FOUND
+      - VALIDATION_ERROR
+      - CREATE_PAGE_ERROR
+      - ATTACHMENT_ERROR
+      - CONFLUENCE_ERROR
+      - HEALTH_CHECK_ERROR
+      - UNKNOWN_ERROR
+      - AUTHENTICATION_ERROR
+      - AUTHORIZATION_ERROR
+      - CONFLICT
+      - RATE_LIMITED
+      - TIMEOUT
+      - CONNECTION_ERROR
+      - CONFLUENCE_SERVICE_ERROR
+      description: First seven exist today; the rest are TARGET (ERR-2).
+    ErrorEnvelope:
+      type: object
+      properties:
+        error_code:
+          $ref: '#/components/schemas/ErrorCode'
+        error_message:
+          type: string
+        error_details:
+          type: object
+          additionalProperties: true
+          description: 'TARGET SEC-7: identifiers only.'
+      required:
+      - error_code
+      - error_message
+      description: Returned as a normal tool result (isError=false). Clients branch on error_code.
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+        service:
+          type: string
+          enum:
+          - confluence-mcp-server
+      required:
+      - status
+      - service
+    JsonRpcRequest:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum:
+          - '2.0'
+        id:
+          oneOf:
+          - type: integer
+          - type: string
+        method:
+          type: string
+          enum:
+          - initialize
+          - tools/list
+          - tools/call
+        params:
+          type: object
+          additionalProperties: true
+      required:
+      - jsonrpc
+      - method
+    JsonRpcResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum:
+          - '2.0'
+        id:
+          oneOf:
+          - type: integer
+          - type: string
+          - type: 'null'
+        result:
+          type: object
+          description: 'For tools/call: structuredContent holds the tool result or an ErrorEnvelope.'
+          additionalProperties: true
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+          required:
+          - code
+          - message
+      required:
+      - jsonrpc
+x-mcp-tools:
+- name: confluence-readPageById
+  requirement: FR-1
+  tags:
+  - confluence
+  - read
+  arguments: '#/components/schemas/ReadPageByIdArguments'
+  result: '#/components/schemas/ReadPageResult'
+  error: '#/components/schemas/ErrorEnvelope'
+  upstream:
+  - (first use) GET /rest/api/space?limit=1 (connection smoke test)
+  - GET /rest/api/content/{id}?expand=body.storage,body.view,body.export_view
+  - GET /rest/api/content/{id}/child/attachment?limit=50
+  - GET {downloadLink} per attachment (all, unbounded today)
+- name: confluence-readPageByTitle
+  requirement: FR-2
+  tags:
+  - confluence
+  - read
+  arguments: '#/components/schemas/ReadPageByTitleArguments'
+  result: '#/components/schemas/ReadPageResult'
+  error: '#/components/schemas/ErrorEnvelope'
+  upstream:
+  - (first use) GET /rest/api/space?limit=1
+  - GET /rest/api/content?spaceKey={space}&title={title}&expand=body.storage,body.view,body.export_view
+  - GET /rest/api/content/{id}/child/attachment?limit=50
+  - GET {downloadLink} per attachment
+- name: confluence-readPageByUrl
+  requirement: FR-3
+  tags:
+  - confluence
+  - read
+  arguments: '#/components/schemas/ReadPageByUrlArguments'
+  result: '#/components/schemas/ReadPageByUrlResult'
+  error: '#/components/schemas/ErrorEnvelope'
+  upstream:
+  - (if space absent from URL) GET /rest/api/content/{id}?expand=space
+  - then the readPageById calls
+- name: confluence-createPage
+  requirement: FR-4
+  tags:
+  - confluence
+  - write
+  arguments: '#/components/schemas/CreatePageArguments'
+  result: '#/components/schemas/CreatePageResult'
+  error: '#/components/schemas/ErrorEnvelope'
+  upstream:
+  - (first use) GET /rest/api/space?limit=1
+  - POST /rest/api/content
+  - POST /rest/api/content/{id}/child/attachment (multipart; only when `attachment` given)
+x-mcp-unregistered:
+- name: confluence-health
+  requirement: FR-5
+  state: implemented, not registered by default
+  decision: Q-8
+  result: '#/components/schemas/HealthToolResult'
+- name: confluence-searchPages
+  requirement: FR-6
+  state: advertised, does not exist
+  decision: Q-1
+- name: confluence-uploadAttachment
+  requirement: FR-7
+  state: advertised, does not exist
+  decision: Q-1

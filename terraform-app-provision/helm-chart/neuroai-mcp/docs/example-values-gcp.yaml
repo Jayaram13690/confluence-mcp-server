@@ -1,0 +1,224 @@
+# Default values for demochart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#appconfig:
+#allconfigurations:
+#  files:
+#    - name: all-configurations.yaml
+#      content: |-
+#        apiVersion: backstage.io/v1alpha1
+#        kind: Location
+#        metadata:
+#          name: all-configurations
+#          description: A collection of all Backstage entities
+#        spec:
+#          targets:
+#            - ./org.yaml
+#            - ./systems.yaml
+#            # - ./remote-templates.yaml
+
+global:
+  replicaCount: 1
+  namespace: flowsource
+
+flowsource:
+  service:
+    type: ClusterIP
+    annotations: |
+      cloud.google.com/neg: '{"exposed_ports": {"7007":{}}}'
+  useInternalPostgres: false
+  ingress:
+    useIngress: false
+
+  flowsourceDeploy:
+    serviceAccount: 
+      name: default
+      annotations: |
+        iam.gke.io/gcp-service-account: ProjectID.iam.gserviceaccount.com
+    image: us-east1-docker.pkg.dev/ProjectID/dev-flowsource/flowsource-gcp-gar:3.1.10.1
+
+  flowsourceConfig:
+    AUTH_GITHUB_ORGANIZATION: "CognizantStudio"
+    AUTH_IDLE_TIMEOUTMINUTES: 30
+    AUTH_PROMPT_BEFORE_IDLESECONDS: 25
+    AZURE_DEVOPS_BASEURL: http://dev.azure.com
+    AZURE_DEVOPS_ORGANIZATION: "DUMMY"
+    CHATBOT_ENABLED: "true"
+    CHATBOT_URL: "DUMMY"
+    CHATBOT_TOKEN: "DUMMY"
+    ChatBotJsonsFolderPath: "/app/chatbot"
+    CHECKMARX_BASE_URL: https://cognizanttechnology.checkmarx.net/cxrestapi/help
+    CHECKMARX_AUTH_URL: https://cognizanttechnology.checkmarx.net/CxRestAPI/auth/identity/connect/token
+    CHECKMARX_USERNAME: "acceleratedigital_svc"
+    CICD_GITHUB_ACTIONS_BASEURL: https://api.github.com/repos/
+    CLOUDABILITY_BASE_URL: "https://api.cloudability.com/v3"
+    DATADOG_SITE: https://us3.datadoghq.com/api/v2/logs/events
+    DEVOPS_GURU_FILTER_FROM_TIME: 0
+    FLOWSOURCE_BASE_URL: "https://dev.gcp.flowsource.cognizantproducts.com/"
+    FLOWSOURCE_VERSION: 1.0
+    GCP_IAP_AUDIENCE: "/projects/544895355411/us-east1/backendServices/6663790557691736207"
+    GOOGLE_TYPE: "service_account"
+    GOOGLE_PROJECT_ID: "ProjectID"
+    GOOGLE_CLIENT_EMAIL: "flowsource-cicd-auth-sa@ProjectID.iam.gserviceaccount.com"
+    GOOGLE_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
+    GOOGLE_TOKEN_URI: "https://oauth2.googleapis.com/token"
+    GOOGLE_AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs"
+    GOOGLE_CLIENT_X509_CERT_URL: "https://www.googleapis.com/robot/v1/metadata/x509/flowsource-cicd-auth-sa%40ProjectID.iam.gserviceaccount.com"
+    GOOGLE_UNIVERSE_DOMAIN: "googleapis.com"
+    DEV_GKE_CLUSTER_NAME: "fstest-gke-cluster"
+    DEV_GKE_CLUSTER_ENDPOINT: "172.16.0.34"
+    INSIGHTS_URL: "http://34.227.203.36:8000"
+    JENKINS_BASE_URL: https://jenkins.cloudsprint.io
+    JIRA_BASE_URL: "https://cdeproducts.atlassian.net/rest/api/3/"
+    JIRA_TARGET: "https://cdeproducts.atlassian.net"
+    JIRA_USER_EMAIL: "sriram.venkatakrishnan2@cognizant.com"
+    MORPHEUS_CLIENT_ID: "somevalue"
+    MORPHEUS_HOST_URL: https://ec2-54-227-175-51.compute-1.amazonaws.com
+    MORPHEUS_INPUT_FIELD_DATA_LEN: "somevalue"
+    MORPHEUS_ORDER_SUBMISSION_ENABLED: "somevalue"
+    MORPHEUS_PASSWORD: "somevalue"
+    MORPHEUS_REJ_UN_AUTH: "false"
+    MORPHEUS_USERNAME: "somevalue"
+    NODE_OPTIONS: "--no-node-snapshot"    
+    POSTGRES_SERVICE_HOST_FLOWSOURCE_ADB: "DUMMY"
+    POSTGRES_SERVICE_PORT_FLOWSOURCE_ADB: "5432"
+    POSTGRES_USER_FLOWSOURCE_ADB: "postgres"
+    PRISMA_API_URL: https://api2.prismacloud.io/
+    S3_BUCKET_NAME: "DUMMY"
+    S3_AWS_REGION: "DUMMY"
+    SONARQUBE_URL: "DUMMY"    
+#    TECHDOCS_STORAGE_PROVIDER_TYPE:
+#    TECHDOCS_STORAGE_CONTAINER_NAME:
+
+  flowsourceSecrets:
+    # true if using external vault like AWS Secrets Manager or Azure Key Vault
+    useSecretProvider: true
+    secretproviderDetails:
+      provider: gcp # for azure specify aks. for aws specify aws. for gcp specify gcp
+      # based on the provider specify the appropriate values in either aws, azure or gcp blocks
+      ######### Provider specific configuration block #####
+#      azure:
+#        keyvaultName: AZURE VAULTNAME # Required in case of azure
+#        tenantId: AZURE TENANTID OF VAULT # Required in case of azure
+#        userManagedIdentityClientId: AZURE CLIENTID # Set the clientID of the user-assigned managed identity to use. Required in case of azure
+#      aws:
+#        region: SECRETS REGION # Required in case of aws
+#        secretARN: ARN OF SECRETS # Required in case of aws
+      gcp:
+        project: "ProjectID" # Required in case of gcp
+      ######### End of Provider specific configuration block #####
+      secretObjects:
+        - keyVaultObjectName: AUTH_GITHUB_CLIENT_ID
+          secretName: AUTH_GITHUB_CLIENT_ID
+        - keyVaultObjectName: AUTH_GITHUB_CLIENT_SECRET
+          secretName: AUTH_GITHUB_CLIENT_SECRET
+        - keyVaultObjectName: AZURE_DEVOPS_TOKEN
+          secretName: AZURE_DEVOPS_TOKEN
+        - keyVaultObjectName: BACKEND_SECRET
+          secretName: BACKEND_SECRET
+        - keyVaultObjectName: CHECKMARX_CLIENT_ID
+          secretName: CHECKMARX_CLIENT_ID
+        - keyVaultObjectName: CHECKMARX_CLIENT_SECRET
+          secretName: CHECKMARX_CLIENT_SECRET
+        - keyVaultObjectName: CHECKMARX_GRANT_TYPE
+          secretName: CHECKMARX_GRANT_TYPE
+        - keyVaultObjectName: CHECKMARX_PASSWORD
+          secretName: CHECKMARX_PASSWORD
+        - keyVaultObjectName: CICD_GITHUB_ACTIONS_TOKEN
+          secretName: CICD_GITHUB_ACTIONS_TOKEN
+        - keyVaultObjectName: CLOUDABILITY_TOKEN
+          secretName: CLOUDABILITY_TOKEN
+        - keyVaultObjectName: DATADOG_API_KEY
+          secretName: DATADOG_API_KEY
+        - keyVaultObjectName: DATADOG_APP_KEY
+          secretName: DATADOG_APP_KEY
+        - keyVaultObjectName: DEVOPS_GURU_AWS_ACCESS_KEY_ID
+          secretName: DEVOPS_GURU_AWS_ACCESS_KEY_ID
+        - keyVaultObjectName: DEVOPS_GURU_AWS_SECRET_ACCESS_KEY
+          secretName: DEVOPS_GURU_AWS_SECRET_ACCESS_KEY
+        - keyVaultObjectName: GITHUB_TOKEN
+          secretName: GITHUB_TOKEN
+        - keyVaultObjectName: GRANT_TYPE
+          secretName: GRANT_TYPE
+        - keyVaultObjectName: GOOGLE_PRIVATE_KEY_ID
+          secretName: GOOGLE_PRIVATE_KEY_ID
+        - keyVaultObjectName: GOOGLE_PRIVATE_KEY
+          secretName: GOOGLE_PRIVATE_KEY
+        - keyVaultObjectName: GOOGLE_CLIENT_ID
+          secretName: GOOGLE_CLIENT_ID
+        - keyVaultObjectName: GIT_TOKEN
+          secretName: GIT_TOKEN
+        - keyVaultObjectName: GITHUB_ENABLED
+          secretName: GITHUB_ENABLED
+        - keyVaultObjectName: INSIGHTS_API_KEY
+          secretName: INSIGHTS_API_KEY
+        - keyVaultObjectName: JENKINS_API_KEY
+          secretName: JENKINS_API_KEY
+        - keyVaultObjectName: JENKINS_USERNAME
+          secretName: JENKINS_USERNAME
+        - keyVaultObjectName: JIRA_ACCESS_KEY
+          secretName: JIRA_ACCESS_KEY
+        - keyVaultObjectName: JIRA_TOKEN
+          secretName: JIRA_TOKEN
+        - keyVaultObjectName: POSTGRES_PASSWORD_FLOWSOURCE_ADB
+          secretName: POSTGRES_PASSWORD_FLOWSOURCE_ADB
+        - keyVaultObjectName: POSTGRES_USER_FLOWSOURCE_ADB
+          secretName: POSTGRES_USER_FLOWSOURCE_ADB
+        - keyVaultObjectName: PRISMA_ACCESS_ID
+          secretName: PRISMA_ACCESS_ID
+        - keyVaultObjectName: PRISMA_ACCESS_KEY
+          secretName: PRISMA_ACCESS_KEY
+        - keyVaultObjectName: S3_AWS_ACCESS_KEY
+          secretName: S3_AWS_ACCESS_KEY
+        - keyVaultObjectName: S3_AWS_SECRET_KEY
+          secretName: S3_AWS_SECRET_KEY
+        - keyVaultObjectName: SCOPE
+          secretName: SCOPE
+        - keyVaultObjectName: SONARQUBE_TOKEN
+          secretName: SONARQUBE_TOKEN
+        - keyVaultObjectName: TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_NAME
+          secretName: TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_NAME
+        - keyVaultObjectName: TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_KEY
+          secretName: TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_KEY
+        - keyVaultObjectName: WELL_ARCHITECTED_AWS_ACCESS_KEY
+          secretName: WELL_ARCHITECTED_AWS_ACCESS_KEY
+        - keyVaultObjectName: WELL_ARCHITECTED_AWS_SECRET_KEY
+          secretName: WELL_ARCHITECTED_AWS_SECRET_KEY
+
+    secrets:
+#      BACKEND_SECRET: "DUMMY"
+#      GITHUB_TOKEN: "DUMMY"
+#      CICD_GITHUB_ACTIONS_TOKEN: "DUMMY"
+#      S3_AWS_ACCESS_KEY: "DUMMY"
+#      S3_AWS_SECRET_KEY: "DUMMY"
+#      WELL_ARCHITECTED_AWS_ACCESS_KEY: "DUMMY"
+#      WELL_ARCHITECTED_AWS_SECRET_KEY: "DUMMY"
+#      AUTH_GITHUB_CLIENT_ID: "DUMMY"
+#      AUTH_GITHUB_CLIENT_SECRET: "DUMMY"
+#      AUTH_ATLASSIAN_CLIENT_ID: "DUMMY"
+#      AUTH_ATLASSIAN_CLIENT_SECRET: "DUMMY"
+#      POSTGRES_USER: "DUMMY"
+#      POSTGRES_PASSWORD: "DUMMY"
+#      JIRA_TOKEN: "DUMMY"
+#      SONARQUBE_TOKEN: "DUMMY"
+#      INSIGHTS_API_KEY: "DUMMY"
+#      CHECKMARX_CLIENT_ID: "DUMMY"
+#      CHECKMARX_CLIENT_SECRET: "DUMMY"
+#      CHECKMARX_USERNAME: "DUMMY"
+#      CHECKMARX_PASSWORD: "DUMMY"
+#      CHECKMARX_GRANT_TYPE: "DUMMY"
+#      AZURE_DEVOPS_TOKEN: "DUMMY"
+#      DEVOPS_GURU_AWS_ACCESS_KEY_ID: "DUMMY"
+#      DEVOPS_GURU_AWS_SECRET_ACCESS_KEY: "DUMMY"
+#      JIRA_ACCESS_KEY: "DUMMY"
+#      DATADOG_API_KEY: "DUMMY"
+#      DATADOG_APP_KEY: "DUMMY"
+#      TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_NAME: "DUMMY"
+#      TECHDOCS_AZURE_BLOB_STORAGE_ACCOUNT_KEY: "DUMMY"
+#      PRISMA_ACCESS_ID: "DUMMY"
+#      PRISMA_ACCESS_KEY: "DUMMY"
+#      JENKINS_USERNAME: "DUMMY"
+#      JENKINS_API_KEY: "DUMMY"
+#      GRANT_TYPE: "DUMMY"
+#      SCOPE: "DUMMY"

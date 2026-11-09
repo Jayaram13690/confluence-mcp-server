@@ -1,0 +1,30 @@
+steps:
+  # Build Docker image with updated consumer folder structure
+  - name: "gcr.io/cloud-builders/docker"
+    env: ["DOCKER_BUILDKIT=1"]
+    id: "Build Docker image"
+    args:
+      [
+        "build",
+        "-t",
+        "${_IMAGE_URI}:${_IMAGE_VERSION}",
+        "--build-arg",
+        "BUILDKIT_INLINE_CACHE=1",
+        ".",
+      ]
+
+  # Push Docker image to Google Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    id: "Push Docker image"
+    args: ["push", "${_IMAGE_URI}:${_IMAGE_VERSION}"]
+
+serviceAccount: "projects/gbg-wxcc/serviceAccounts/neuroaieng-cloudbuild-sa@gbg-wxcc.iam.gserviceaccount.com"
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - "${_IMAGE_URI}:${_IMAGE_VERSION}"
+
+substitutions:
+  _IMAGE_URI: "us-east4-docker.pkg.dev/gbg-wxcc/neuroaiengineering-repo/dev/confluence-mcp-server"
+  _IMAGE_VERSION: "v1" # Updated version for consumer folder changes

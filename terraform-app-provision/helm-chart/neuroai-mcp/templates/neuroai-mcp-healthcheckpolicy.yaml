@@ -1,0 +1,23 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: {{ .Values.global.appName }}-health-check-policy
+  namespace: {{ .Values.global.namespace }}
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ .Values.neuroaimcp.service.name }}
+  default:
+    checkIntervalSec: 5
+    timeoutSec: 4
+    healthyThreshold: 2
+    unhealthyThreshold: 3
+    logConfig:
+      enabled: true  # Enable logging to debug
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: {{.Values.neuroaimcp.healthCheckPolicy.port}}
+        requestPath: {{.Values.neuroaimcp.healthCheckPolicy.requestPath | quote }}

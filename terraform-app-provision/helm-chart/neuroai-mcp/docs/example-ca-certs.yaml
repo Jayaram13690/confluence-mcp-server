@@ -1,0 +1,7 @@
+cacerts:
+  files:
+    - name: flowsource-authority-data.pem
+      content: |-
+        -----BEGIN CERTIFICATE-----
+        -----END CERTIFICATE-----
+

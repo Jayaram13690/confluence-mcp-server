@@ -1,0 +1,38 @@
+{{- if and .Values.neuroaimcp.Gateway.useGateway .Values.neuroaimcp.Gateway.createGateway }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.neuroaimcp.Gateway.name }}
+  namespace: {{ .Values.neuroaimcp.Gateway.namespace }}
+  labels:
+    
+  annotations:
+    networking.gke.io/gateway-class: {{ .Values.neuroaimcp.Gateway.GatewayClass }}
+    {{- if .Values.neuroaimcp.Gateway.staticIPName }}
+    networking.gke.io/internal-load-balancer-ip-addresses: {{ .Values.neuroaimcp.Gateway.staticIPName }}
+    {{- end }}
+spec:
+  gatewayClassName: {{ .Values.neuroaimcp.Gateway.GatewayClass }}
+  {{- if .Values.neuroaimcp.Gateway.staticIPName }}
+  addresses:
+  - type: NamedAddress
+    value: {{ .Values.neuroaimcp.Gateway.staticIPName }}
+  {{- end }}
+  listeners:  
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: https
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: Same
+    tls:
+      mode: Terminate
+      options: # Specifies a comma-separated list of Certificate Manager certificates to use for TLS termination.
+        networking.gke.io/cert-manager-certs: {{ .Values.neuroaimcp.Gateway.certificates }}
+{{- end }}

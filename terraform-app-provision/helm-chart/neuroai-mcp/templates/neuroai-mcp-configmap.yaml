@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.global.appName }}-cm
+  namespace: {{ .Values.global.namespace }}
+data:
+  {{- range $key, $val := .Values.neuroaimcp.neuroaimcpConfig }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}

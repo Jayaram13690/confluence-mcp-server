@@ -1,0 +1,25 @@
+{{- if .Values.neuroaimcp.Gateway.useGateway }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Values.global.appName }}-httproute
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- toYaml .Values.global.labels | nindent 4 }} 
+spec:
+  parentRefs:
+  - kind: Gateway
+    name: {{ .Values.neuroaimcp.Gateway.name }}
+    namespace: {{ .Values.neuroaimcp.Gateway.namespace }}
+  hostnames:
+  - {{ .Values.neuroaimcp.httpRoute.host | quote }}
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: {{ .Values.neuroaimcp.httpRoute.path }}
+    backendRefs:
+    - name: {{ .Values.neuroaimcp.service.name }}
+      port: 8080
+      weight: 100
+{{- end }}

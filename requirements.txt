@@ -1,0 +1,32 @@
+﻿# Core MCP Frame
+fastmcp==1.0
+
+# Production ASGI Server
+uvicorn[standard]==0.38.0  # Production-grade ASGI server with performance extras
+
+# Environment and Configuration
+python-dotenv==1.1.1
+
+# Atlassian API Integration
+atlassian-python-api==4.0.7
+
+# Data Validation and Models
+pydantic==2.11.7
+
+# HTML/XML Parsing
+beautifulsoup4==4.13.5
+lxml==6.0.1
+
+# Document Processing
+PyMuPDF==1.26.4          # PDF processing (fitz)
+python-docx==1.2.0       # DOCX processing
+
+# Development and Testing
+pytest==8.4.2
+pytest-asyncio==1.1.0
+pytest-cov==7.0.0
+coverage==7.10.6
+pytest-mock==3.15.0
+
+# Optional: Uncomment if using specific FastMCP exceptions
+# fastmcp[exceptions]>=2.12.2

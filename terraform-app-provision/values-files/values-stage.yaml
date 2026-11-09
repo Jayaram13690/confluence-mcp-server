@@ -1,0 +1,31 @@
+global:
+  replicaCount: "1"
+  namespace: "neuroai-mcp"
+
+neuroaimcp:
+  service:
+    type: ClusterIP
+    annotations:
+      cloud.google.com/neg: '{"exposed_ports": {"8000":{}}}'
+      cloud.google.com/backend-config: '{"default": "neuroai-mcp-backendconfig"}'
+
+  useInternalPostgres: true
+
+  internalLoadBalancerService:
+    enabled: true
+    name: malb-mcp-stage
+    type: LoadBalancer
+    port: 8000
+    annotations:
+      cloud.google.com/load-balancer-type: "Internal"
+      networking.gke.io/internal-load-balancer-allow-global-access: "true"
+      networking.gke.io/load-balancer-ipv4-address: "10.10.0.66"
+
+  neuroaiMcpDeploy:
+    serviceAccount:
+      name: neuroaimcp-ksa
+      create: true
+      annotations:
+        iam.gke.io/gcp-service-account: neuroaieng-workloadidentity-sa@gbg-wxcc.iam.gserviceaccount.com
+    image: "europe-west3-docker.pkg.dev/gbg-wxcc/neuroaiengineering-stage-repo/mcpserver/stage:stage-latest"
+    imagePullPolicy: Always

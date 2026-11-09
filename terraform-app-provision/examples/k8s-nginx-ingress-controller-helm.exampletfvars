@@ -1,0 +1,9 @@
+rg_name         = "RG-Skygrade-Morpheus-dev"
+rg_location     = "eastus"
+cluster_name    = "test-cluster"
+chart           = "ingress-nginx"
+chartrepository = "https://kubernetes.github.io/ingress-nginx"
+chartversion    = "4.10.0"
+values-files    = ["../../../neuroaiChartValues/k8s-nginx-ingress-controller-values.yaml"]
+namespace       = "nginx-ingress"
+deploymentname  = "nginx-ingress"
